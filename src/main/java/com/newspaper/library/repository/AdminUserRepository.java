@@ -1,0 +1,18 @@
+package com.newspaper.library.repository;
+
+import com.newspaper.library.entity.AdminUser;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+/**
+ * Repository for AdminUser entity operations.
+ */
+@Repository
+public interface AdminUserRepository extends JpaRepository<AdminUser, Long> {
+
+  Optional<AdminUser> findByUsername(String username);
+
+  boolean existsByUsername(String username);
+}

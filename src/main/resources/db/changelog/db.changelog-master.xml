@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- 
+        MASTER CHANGELOG - All database changes in ONE file
+        
+        HOW TO USE:
+        1. Add new changeset at the bottom with incremented id
+        2. Restart application - Liquibase will apply new changes automatically
+        3. Never modify existing changesets - always add new ones
+        
+        CHANGESET ID FORMAT: Use sequential numbers (1, 2, 3, etc.)
+    -->
+
+    <!-- ========================================== -->
+    <!-- INITIAL SCHEMA - Tables                    -->
+    <!-- ========================================== -->
+
+    <!-- Changeset 1: Admin Users Table -->
+    <changeSet id="1" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="admin_users"/>
+            </not>
+        </preConditions>
+        <comment>Create admin_users table for authentication</comment>
+
+        <createTable tableName="admin_users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="admin_users" indexName="idx_admin_user_username">
+            <column name="username"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 2: Editions Table -->
+    <changeSet id="2" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="editions"/>
+            </not>
+        </preConditions>
+        <comment>Create editions table for newspaper editions</comment>
+
+        <createTable tableName="editions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slug" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="city" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(100)"/>
+            <column name="state" type="VARCHAR(100)"/>
+            <column name="language" type="VARCHAR(50)"/>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="edition_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="editions" indexName="idx_edition_slug">
+            <column name="slug"/>
+        </createIndex>
+
+        <createIndex tableName="editions" indexName="idx_edition_active">
+            <column name="active"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 3: Issues Table -->
+    <changeSet id="3" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="issues"/>
+            </not>
+        </preConditions>
+        <comment>Create issues table for newspaper PDFs</comment>
+
+        <createTable tableName="issues">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="edition_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_issue_edition"
+                             references="editions(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="publication_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="storage_key" type="VARCHAR(500)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="content_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="page_count" type="INTEGER"/>
+            <column name="cover_image_key" type="VARCHAR(500)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="issues"
+                             columnNames="edition_id, publication_date"
+                             constraintName="uk_edition_publication_date"/>
+
+        <createIndex tableName="issues" indexName="idx_issue_publication_date">
+            <column name="publication_date"/>
+        </createIndex>
+
+        <createIndex tableName="issues" indexName="idx_issue_edition_id">
+            <column name="edition_id"/>
+        </createIndex>
+
+        <createIndex tableName="issues" indexName="idx_issue_edition_date">
+            <column name="edition_id"/>
+            <column name="publication_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 4: Add table comments (PostgreSQL) -->
+    <changeSet id="4" author="system" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="admin_users"/>
+        </preConditions>
+        <comment>Add documentation comments to tables and columns</comment>
+
+        <sql>
+            COMMENT ON TABLE admin_users IS 'Admin users who can upload and manage newspaper issues';
+            COMMENT ON TABLE editions IS 'Newspaper editions (e.g., Bhopal City, Indore City)';
+            COMMENT ON TABLE issues IS 'Specific issues of editions published on particular dates';
+
+            COMMENT ON COLUMN admin_users.password_hash IS 'BCrypt hash of the password, never plaintext';
+            COMMENT ON COLUMN editions.slug IS 'URL-friendly unique identifier for the edition';
+            COMMENT ON COLUMN editions.edition_type IS 'Type: CITY, UPCOUNTRY, REGION, OTHER';
+            COMMENT ON COLUMN editions.state IS 'State/Province where edition is published';
+            COMMENT ON COLUMN editions.language IS 'Primary language of the edition';
+            COMMENT ON COLUMN editions.description IS 'Brief description of the edition';
+            COMMENT ON COLUMN issues.storage_key IS 'File path for the PDF file';
+            COMMENT ON COLUMN issues.publication_date IS 'The date this issue was published';
+            COMMENT ON COLUMN issues.page_count IS 'Number of pages in the PDF';
+            COMMENT ON COLUMN issues.cover_image_key IS 'File path for cover thumbnail';
+        </sql>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- SEED DATA - Initial Data                   -->
+    <!-- ========================================== -->
+
+    <!-- Changeset 5: Seed editions -->
+    <changeSet id="5" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM editions</sqlCheck>
+        </preConditions>
+        <comment>Insert default newspaper editions</comment>
+
+        <insert tableName="editions">
+            <column name="name" value="Bhopal City"/>
+            <column name="slug" value="bhopal-city"/>
+            <column name="city" value="Bhopal"/>
+            <column name="region" value="Central"/>
+            <column name="state" value="Madhya Pradesh"/>
+            <column name="language" value="Hindi"/>
+            <column name="edition_type" value="CITY"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="editions">
+            <column name="name" value="Indore City"/>
+            <column name="slug" value="indore-city"/>
+            <column name="city" value="Indore"/>
+            <column name="region" value="Western"/>
+            <column name="state" value="Madhya Pradesh"/>
+            <column name="language" value="Hindi"/>
+            <column name="edition_type" value="CITY"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <!-- Changeset 6: Seed admin user -->
+    <changeSet id="6" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM admin_users WHERE username='admin'</sqlCheck>
+        </preConditions>
+        <comment>Insert default admin user (username: admin, password: admin123)</comment>
+
+        <insert tableName="admin_users">
+            <column name="username" value="admin"/>
+            <!-- BCrypt hash of 'admin123' -->
+            <column name="password_hash" value="$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8n7b7v7gOL4Mg9dzbO"/>
+            <column name="role" value="ADMIN"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <!-- Changeset 7: Update admin_users role constraint to allow USER role -->
+    <changeSet id="7" author="system" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM pg_constraint
+                WHERE conname = 'admin_users_role_check'
+                AND conrelid = 'admin_users'::regclass
+            </sqlCheck>
+        </preConditions>
+        <comment>Update role constraint to allow both USER and ADMIN roles</comment>
+
+        <sql>
+            ALTER TABLE admin_users DROP CONSTRAINT IF EXISTS admin_users_role_check;
+            ALTER TABLE admin_users ADD CONSTRAINT admin_users_role_check CHECK (role IN ('USER', 'ADMIN'));
+        </sql>
+    </changeSet>
+
+    <!-- Changeset 8: Fix admin password hash -->
+    <changeSet id="8" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM admin_users WHERE username='admin'</sqlCheck>
+        </preConditions>
+        <comment>Update admin user password to correct BCrypt hash for 'admin123'</comment>
+
+        <update tableName="admin_users">
+            <column name="password_hash" value="$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG"/>
+            <where>username='admin'</where>
+        </update>
+    </changeSet>
+
+    <!-- Changeset 9: Promote testuser to ADMIN temporarily -->
+    <changeSet id="9" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM admin_users WHERE username='testuser' AND role='USER'
+            </sqlCheck>
+        </preConditions>
+        <comment>Promote testuser to ADMIN role for testing</comment>
+
+        <update tableName="admin_users">
+            <column name="role" value="ADMIN"/>
+            <where>username='testuser'</where>
+        </update>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- FUTURE CHANGES - Add new changesets below  -->
+    <!-- ========================================== -->
+
+    <!--
+    EXAMPLE: How to add a new column
+    
+    <changeSet id="8" author="your-name">
+        <comment>Add email column to admin_users</comment>
+        <addColumn tableName="admin_users">
+            <column name="email" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+    -->
+
+    <!--
+    EXAMPLE: How to add seed data
+    
+    <changeSet id="9" author="your-name">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM editions WHERE slug='mumbai-city'</sqlCheck>
+        </preConditions>
+        <comment>Add Mumbai edition</comment>
+        <insert tableName="editions">
+            <column name="name" value="Mumbai City"/>
+            <column name="slug" value="mumbai-city"/>
+            <column name="city" value="Mumbai"/>
+            <column name="state" value="Maharashtra"/>
+            <column name="edition_type" value="CITY"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+    -->
+
+</databaseChangeLog>
