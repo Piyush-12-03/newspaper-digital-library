@@ -789,7 +789,7 @@ java -jar target/newspaper-digital-library-0.0.1-SNAPSHOT.jar
 
 5. **Verify application is running**:
 ```bash
-curl http://localhost:8080/actuator/health
+curl http://localhost:8080/api/v1/actuator/health
 ```
 
 Expected response:
@@ -801,15 +801,15 @@ Expected response:
 
 Once the application is running, access interactive API documentation:
 
-**Swagger UI**: http://localhost:8080/swagger-ui.html
+**Swagger UI**: http://localhost:8080/api/v1/swagger-ui/index.html#/
 
-**OpenAPI JSON**: http://localhost:8080/v3/api-docs
+**OpenAPI JSON**: http://localhost:8080/api/v1/v3/api-docs
 
 ### How to Test From Swagger
 
 **Step 1**: Open Swagger
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8080/api/v1/swagger-ui/index.html#/
 ```
 
 **Step 2**: Register or Login
